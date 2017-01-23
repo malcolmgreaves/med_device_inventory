@@ -1,0 +1,26 @@
+Five number summary + mean & std. deviation on ./data/incomplete_sets-2016_08_30.csv
+(23, 23, 23, 23, 24) about 23.0011 +/- 1.9989
+
+{'in_meidan': 3672, 'outside_of': 4}
+Offending 4 line(s):
+
+1/4 | line index 12 / 3676 | ,15,,1,,0,,,-1,,,250-080-697r,,,,,,"Ratcheted Retention, Grasper",,,,,
+
+2/4 | line index 2896 / 3676 | ,9,,1,,0,,,-1,,,SPO1735-12,,,,,,"Tip, Shunt Passer Large Shaft Connector",,,,,
+
+3/4 | line index 2900 / 3676 | ,7,,1,,0,,,-1,,,SPO1735-9,,,,,,"Tip, Shunt Passer Medium Shaft Connector",,,,,
+
+4/4 | line index 3675 / 3676 | "instacount®PLUS, © 2008-2010 Invitec GmbH & Co. KG",,,,,,,,,,,,,,,,Froedtert Memorial Lutheran ,,,,,,
+
+
+Five number summary + mean & std. deviation on ./data/incomplete_sets-2016_08_02.csv
+(22, 22, 22, 22, 23) about 22.0005 +/- 1.4138
+
+{'in_meidan': 3646, 'outside_of': 2}
+Offending 2 line(s):
+
+1/2 | line index 2901 / 3648 | ,7,,1,,0,,,-1,,,SPO1735-9,,,,,,"Tip, Shunt Passer Medium Shaft Connector",,,,
+
+2/2 | line index 3647 / 3648 | "instacount®PLUS, © 2008-2010 Invitec GmbH & Co. KG",,,,,,,,,,,,,,,,Froedtert Memorial Lutheran ,,,,,
+
+
