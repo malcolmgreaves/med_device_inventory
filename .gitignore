@@ -1,0 +1,55 @@
+
+*~lock*#
+
+# Common
+*.s
+*~
+*.swp
+*.swo
+
+# Sublime Text related
+*sublime-project
+*.sublime-workspace
+
+# JVM related (Java, Scala, Clojure, etc.)
+projectFilesBackup
+*.class
+*.iml
+*.ipr
+*.iws
+*.idea
+target/
+*lib_managed
+*src_managed
+project/boot
+project/plugins/project
+generatedCache
+
+# OS X related
+*.DS_Store
+
+# Python related
+.ipynb_checkpoints
+*.pyc
+
+# Object, Linking files (e.g. gcc...)
+*.ll
+*.o
+
+# Unknown / Misc.
+benchmark/times
+test-out/*/*-log
+test-out/*/*-skel
+test-out/*/*-src
+profiler/less
+
+/local.properties
+build
+published
+generated
+nightlies
+
+*.deg
+*.debug
+*.pgm
+
