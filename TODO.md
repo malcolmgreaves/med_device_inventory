@@ -1,6 +1,6 @@
 # TODO
 
-* [ ] extract and structure Incomplete Sets data
+* [x] extract and structure Incomplete Sets data
 	* convert XLS --> CSV --> JSON (or, at least, xls --> json)
 	* do so reliably
 	* point is to have a machine-readable format

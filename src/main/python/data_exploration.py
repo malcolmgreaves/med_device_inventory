@@ -13,6 +13,8 @@ import pandas as pd
 known_csv_names = ["incomplete_sets-2016_08_30.csv", "incomplete_sets-2016_08_02.csv"]
 known_data_dir="./data"
 
+special_header_ids =set(["pos","tgt","act","no","item","name","repair"])
+
 class ExtNumSummary():
 
   def __init__(self, min_v, q1, median, q3, max_v, mean, stddev):
@@ -73,6 +75,16 @@ def row_len_stats(numbers):
     stddev=math.sqrt(variance)
   )
 
+def header_row(lines):
+  for row in lines:
+    s_row = set([x.lower() for x in row])
+    if "pos" in s_row or "act" in s_row or "tgt" in s_row:
+      return row
+  return []
+
+def column_header_to_index(h_row):
+  return dict(filter(lambda (x,i): x in special_header_ids, zip(h_row, xrange(len(h_row)))))
+
 ####################
 
 if __name__=="__main__":
@@ -80,9 +92,14 @@ if __name__=="__main__":
   for n in known_csv_names:
 
     name = "%s/%s" % (known_data_dir, n)
+    lines = load(name)
+
+    h_row = header_row(lines)
+    print "Header row length: %d , content:\n%s\n" % (len(h_row), ",".join(h_row))
+    print column_header_to_index(h_row)
+
     print "Five number summary + mean & std. deviation on %s" % name
 
-    lines = load(name)
     row_lengths = [len(x) for x in lines]
 
     stats = row_len_stats(row_lengths)
