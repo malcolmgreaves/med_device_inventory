@@ -1,4 +1,9 @@
 
+db_all_incomplete_sets_parsed.json
+all_xls
+targeted_analysis_trays.json
+
+out
 *~lock*#
 
 # Common
@@ -27,6 +32,7 @@ generatedCache
 
 # OS X related
 *.DS_Store
+
 
 # Python related
 .ipynb_checkpoints

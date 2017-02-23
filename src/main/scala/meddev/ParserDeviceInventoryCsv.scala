@@ -1,8 +1,6 @@
 package meddev
 
 import java.io._
-import java.time.format.DateTimeFormatter
-import java.util.Date
 
 import scala.io.Source
 import scala.util.control.Breaks._
@@ -11,53 +9,6 @@ import cmd.RunnerHelpers.time
 import scalaz.\/
 import rapture.json._
 import jsonBackends.jawn._
-import sutils.fp.Types.Err
-
-case class Header(nCols: Int,
-                  position: Index,
-                  target: Index,
-                  account: Index,
-                  number: Index,
-                  item: Index,
-                  name: Index,
-                  repair: Index,
-                  originalText: String)
-
-case class Tray(date: String,
-                name: String,
-                serialNum: String,
-                // notes: String,
-                devices: IndexedSeq[Device],
-                originalText: String)
-
-object Tray {
-  val empty: Tray = Tray(null, "", "", IndexedSeq.empty[Device], "")
-}
-
-case class Device(position: Int,
-                  target: Int,
-                  account: Int,
-                  number: String,
-                  item: String,
-                  name: String,
-                  repair: String,
-                  originalText: String)
-
-object Device {
-  val empty: Device =
-    Device(Integer.MIN_VALUE,
-           Integer.MIN_VALUE,
-           Integer.MIN_VALUE,
-           "",
-           "",
-           "",
-           "",
-           "")
-}
-
-case class MedicalDeviceInventory(date: String,
-                                  header: Header,
-                                  trays: IndexedSeq[Tray])
 
 object ParserDeviceInventoryCsv {
 
@@ -95,28 +46,6 @@ object ParserDeviceInventoryCsv {
 
   def notesFromLine(bits: Array[String]): String =
     bits(bits.length - 6)
-//
-//  private val dateFormats = List(
-//    "MM/DD/uuuu"
-////    "dd/MM/uuuu",
-////    "MMM dd, uuuu",
-////    "dd MMMM uuuu",
-////    "dd MMM uuuu",
-////    "dd-MM-uuuu"
-//  ).map(p => (p, DateTimeFormatter.ofPattern(p)))
-//  private val iso8601DateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
-//
-//  def dateParse(dateStr: String): Option[String] = {
-//    val trimmedDate = dateStr.trim
-//    if (trimmedDate.isEmpty)
-//      None
-//    else
-//      dateFormats.toStream.flatMap {
-//        case (pattern, fmt) =>
-//          println(s"Pattern: $pattern")
-//          \/.fromTryCatchNonFatal { fmt.parse(trimmedDate) }.toOption
-//      }.map { iso8601DateFormatter.format }.headOption
-//  }
 
   def dateParse(s: String): Option[String] =
     \/.fromTryCatchNonFatal {
@@ -124,20 +53,7 @@ object ParserDeviceInventoryCsv {
       if (bits.length > 3)
         throw new Exception("")
 
-      val month = bits(0).toInt match {
-        case 1 => "Jan"
-        case 2 => "Feb"
-        case 3 => "Mar"
-        case 4 => "Apr"
-        case 5 => "May"
-        case 6 => "Jun"
-        case 7 => "Jul"
-        case 8 => "Aug"
-        case 9 => "Sep"
-        case 10 => "Oct"
-        case 11 => "Nov"
-        case 12 => "Dec"
-      }
+      val month = DataSchemaHelpers.monthNumToName(bits(0).toInt)
       val day = bits(1).toInt
       val year = bits(2).toInt
 
@@ -193,13 +109,13 @@ object ParserDeviceInventoryCsv {
     }
 
     val trays: IndexedSeq[Tray] = {
-      val (aTrays, leftoverTray) =
-        remaining.foldLeft((IndexedSeq.empty[Tray], Option.empty[Tray])) {
-          case ((accumTrays, maybeTray), line) =>
+      val (aTrays, leftoverTray, _) =
+        remaining.foldLeft((IndexedSeq.empty[Tray], Option.empty[Tray], "")) {
+          case ((accumTrays, maybeTray, currSerialNum), line) =>
             val bits = line.split(",")
 
             if (bits.forall(_.isEmpty)) {
-              (accumTrays, maybeTray)
+              (accumTrays, maybeTray, currSerialNum)
 
             } else if (bits.head.nonEmpty) {
               // STARTING A NEW TRAY
@@ -215,19 +131,16 @@ object ParserDeviceInventoryCsv {
 
               (
                 maybeTray.fold(accumTrays)(t => accumTrays :+ t),
-                Some(newTray)
+                Some(newTray),
+                newTray.serialNum
               )
 
             } else if (line.contains("S/N:")) {
-              // TODO
-              // FIXME
+
               val serialNumber = bits(nSepToSerialNumberValue)
               val notes = notesFromLine(bits)
 
-              System.err.println(
-                s"WHAT DO TO! I found a serial number ($serialNumber) and notes ($notes) -- what does this format mean?: $line") //
-
-              (accumTrays, maybeTray)
+              (accumTrays, maybeTray, serialNumber)
 
             } else {
               // ADDING A NEW DEVICE TO AN EXISTING TRAY
@@ -238,6 +151,7 @@ object ParserDeviceInventoryCsv {
                 account = bits(Index(header.account)).toInt,
                 number = bits(Index(header.number)),
                 item = bits(Index(header.item)),
+                serialNum = currSerialNum,
                 name = bits(Index(header.name)),
                 repair = \/.fromTryCatchNonFatal { bits(Index(header.repair)) }
                   .getOrElse(""),
@@ -252,7 +166,8 @@ object ParserDeviceInventoryCsv {
                 accumTrays,
                 maybeTray.map { tray =>
                   tray.copy(devices = tray.devices :+ newDevice)
-                }
+                },
+                currSerialNum
               )
             }
         }
@@ -290,29 +205,49 @@ object ParserDeviceInventoryCsv {
 
     val output: File = new File(args(args.length - 1))
 
-    System.err.println(
+    println(
       s"""After expanding the input arguments, there are ${inputs.size} csv files:
         ${inputs.map { _.toString }.mkString("\n\t")}
       """
     )
 
-    System.err.println(
+    println(
       s"Writing all cleaned and extracted information in JSON format to: $output")
 
-    val allInventories =
-      inputs.foldLeft(IndexedSeq.empty[MedicalDeviceInventory]) {
-        case (inventories, fi) =>
-          val inventory = parse(Source.fromFile(fi).getLines.toIndexedSeq)
-          println(
-            s"$time | Parsed inventory for ${inventory.date}, has ${inventory.trays.size} trays.")
-          inventories :+ inventory
+    case class EF(fi: File, err: Throwable)
+
+    val (allInventories, allErrFis) =
+      inputs.foldLeft(
+        (IndexedSeq.empty[MedicalDeviceInventory], List.empty[EF])) {
+        case ((inventories, errFis), fi) =>
+          \/.fromTryCatchNonFatal {
+            val inventory =
+              parse(Source.fromFile(fi).getLines.toSeq.toIndexedSeq)
+            println(
+              s"$time | Parsed inventory for ${inventory.date}, has ${inventory.trays.size} trays.")
+            (inventories :+ inventory, errFis)
+
+          }.fold(err => (inventories, errFis :+ EF(fi, err)), identity)
       }
 
-    val w = new BufferedWriter(new FileWriter(output))
-    val j = Json(allInventories.flatMap { _.trays })
-    import formatters.compact._
-    w.write(Json.format(j))
-    w.close()
+    if (allErrFis.nonEmpty) {
+      System.err.println(
+        s"Failed to process ${allErrFis.size} CSV files. These were:")
+      val em = allErrFis.zipWithIndex.map {
+        case (EF(fi, err), i) =>
+          s"""\t[${i + 1} / ${allErrFis.size}] $fi\n\t----\n\t${err.getStackTrace
+            .mkString("\n\t")}"""
+      }.mkString("\n\n")
+      System.err.println(em)
+    }
+
+    println(
+      s"\nSuccessfully parsed ${allInventories.size} / ${inputs.size} CSV files")
+
+    import sutils.fp.ImplicitDisjunctionOps._
+    JsonSupport
+      .writeTrays(output, allInventories.flatMap { _.trays })
+      .getUnsafe
   }
 
 }
