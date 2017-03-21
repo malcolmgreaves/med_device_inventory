@@ -5,7 +5,7 @@
 	* do so reliably
 	* point is to have a machine-readable format
 
-* [ ] load JSON data into queryable format
+* [x] load JSON data into queryable format
 	* JSON --> database
 	* goal is to make it easy to ask question: **"What items are present in these trays for this period of time?"**
 
