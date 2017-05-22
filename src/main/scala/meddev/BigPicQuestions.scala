@@ -9,7 +9,7 @@ import rapture.json.jsonBackends.jawn._
 
 import scala.io.Source
 
-object Explore_AnalyzerInventoryDb {
+object BigPicQuestions {
 
   /** Starting from the beginning of CE. */
   type Year = Int
@@ -164,7 +164,9 @@ object Explore_AnalyzerInventoryDb {
 
   def main(args: Array[String]): Unit = {
 
-    if (args.isEmpty || args.length < 2) {
+    val N_REQ = 1
+
+    if (args.isEmpty || args.length < N_REQ) {
       System.err.println(
         """Expecting a sequence of 1 or more input files or directories followed by 1 output filepath.""")
       System.exit(1)
@@ -181,11 +183,12 @@ object Explore_AnalyzerInventoryDb {
           IndexedSeq.empty[File]
 
       args.slice(0, args.length - 1).flatMap { x =>
+        System.err.println(s"Reading file: $x")
         deeper(new File(x))
       }
     }
 
-    val output: File = new File(args(args.length - 1))
+//    val output: File = new File(args(args.length - 1))
 
     System.err.println(
       s"""After expanding the input arguments, there are ${inputs.size} JSON files:
@@ -193,7 +196,7 @@ object Explore_AnalyzerInventoryDb {
       """
     )
 
-    System.err.println(s"Writing analysis to: $output")
+//    System.err.println(s"Writing analysis to: $output")
 
     val allTrays =
       inputs.foldLeft(IndexedSeq.empty[Tray]) {
@@ -222,46 +225,10 @@ object Explore_AnalyzerInventoryDb {
         case (compactName, history) =>
           (compactName, history.sortBy { trayDateKey }.toIndexedSeq)
       }
-    println(s"${trayType2history.size} tray types")
+    println(s"${trayType2history.size} tray types\n")
 
-//    val byYearByWeekTrays = orgByDate(traysOf(tray2history))
-
-    println("")
-    println("\n\nBY TRAY NAME\n\n")
-    tray2history.foreach {
-      case (name, trays) =>
-        val byYearByWeekTraysForName = orgByDate(trays)
-        println(s"Tray: $name")
-        println(s"=====================")
-        printAnalysisMissing(byYearByWeekTraysForName)
-        println("")
-
-    }
-    println("\n\nBY TRAY TYPE\n\n")
-    trayType2history.foreach {
-      case (name, trays) =>
-        val byYearByWeekTraysForName = orgByDate(trays)
-        println(s"Tray: $name")
-        println(s"=====================")
-        printAnalysisMissing(byYearByWeekTraysForName)
-        println("")
-    }
-    println("\n\nALL TRAYS\n\n")
-    println(s"=====================")
-    printAnalysisMissing(orgByDate(traysOf(tray2history)))
-
-//    val targetNameFragment = "BGEN"
-//    val targetedTrays: IndexedSeq[Tray] = trayType2history(targetNameFragment)
-//    println(
-//      s"${targetedTrays.size} trays that have $targetNameFragment in their name")
-//
-//    import sutils.fp.ImplicitDisjunctionOps._
-//    JsonSupport.writeTrays(output, targetedTrays).getUnsafe
-//
-//    val (totalAccount, totalTarget, percentMissing) = compMissing(targetedTrays)
-//    println(
-//      s"For the $targetNameFragment trays, expecting $totalTarget but actually have $totalAccount tools (${formatTwoDecimal(percentMissing)} % missing)"
-//    )
+    println("tray types:")
+    trayType2history.keys.foreach { key => println(key)}
 
   }
 
