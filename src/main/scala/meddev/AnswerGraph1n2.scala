@@ -95,6 +95,16 @@ object AnswerGraph1n2 {
       }
       .map { case (week, ts) => (week, ts.sortBy { trayDateKey }) }
 
+  def groupByMonth(trays: Seq[Tray]): Map[Month, Seq[Tray]] =
+    trays.foldLeft(Map.empty[Month, Seq[Tray]]) {
+      case (a, t) =>
+        val (_, month, _) = extractYearMonthDay(t.date)
+        if (a.contains(month))
+          (a - month) + (month -> (a(month) :+ t))
+        else
+          a + (month -> Seq(t))
+    }
+
   def orgByDate(trays: Seq[Tray]): Map[Year, Map[Week, Seq[Tray]]] =
     groupByYear(trays).foldLeft(Map.empty[Year, Map[Week, Seq[Tray]]]) {
       case (a, (y, traysInYear)) =>
@@ -161,6 +171,21 @@ object AnswerGraph1n2 {
         }
         println("")
     }
+
+  def organize[T](m: Map[String, T]): Seq[(String, T)] =
+    m.toSeq.sortBy { case (key, _) => key }
+
+  val specialTrayNames = Seq(
+    "WORA002",
+    "WORA011",
+    "WORA032",
+    "WORA032",
+    "WNEU063",
+    "WNEU247",
+    "EPLA001",
+    "EORT322",
+    "BGEN018"
+  )
 
   def main(args: Array[String]): Unit = {
     println(s"Executing (class): ${this.getClass.getName}\n")
@@ -231,11 +256,16 @@ object AnswerGraph1n2 {
     val wentTrays = trayType2history("WENT")
     println(s"There are ${wentTrays.size} WENT trays\n")
 
-    wentTrays.slice(0, 10).foreach { x =>
-      println(s"${x.name} as ${x.serialNum}\n")
+    println("#s by month")
+    val wentByMonth = organize(groupByMonth(wentTrays).map {
+      case (m, x) =>
+        (DataSchemaHelpers.monthNumToName(m), x)
+    })
+    wentByMonth.foreach {
+      case (month, trays) =>
+        println(s"$month has ${trays.size} trays")
     }
-
-
+    println("")
 
   }
 
