@@ -223,30 +223,19 @@ object AnswerGraph1n2 {
     "BGEN018"
   )
 
+
+
+  def selectTraysByName(trays: Seq[Tray], name:String): Seq[Tray] =
+    trays.filter { t => name.equals(cleanName(t.name))}
+
   val TRAY_1 = "WENT160"
   val TRAY_2 = "WENT024"
   val TRAY_3 = "WENT084"
   val TRAY_4 = "WENT155"
-
-  def selectTrays1(trays: Seq[Tray]): Seq[Tray] =
-    trays.filter { tray =>
-      tray.name.equals(TRAY_1)
-    }
-
-  def selectTrays2(trays: Seq[Tray]): Seq[Tray] =
-    trays.filter { tray =>
-      tray.name.equals(TRAY_2)
-    }
-
-  def selectTrays3(trays: Seq[Tray]): Seq[Tray] =
-    trays.filter { tray =>
-      tray.name.equals(TRAY_3)
-    }
-
-  def selectTrays4(trays: Seq[Tray]): Seq[Tray] =
-    trays.filter { tray =>
-      tray.name.equals(TRAY_4)
-    }
+  def selectTrays1(trays: Seq[Tray]) = selectTraysByName(trays, TRAY_1)
+  def selectTrays2(trays: Seq[Tray]) = selectTraysByName(trays, TRAY_2)
+  def selectTrays3(trays: Seq[Tray]) = selectTraysByName(trays, TRAY_3)
+  def selectTrays4(trays: Seq[Tray]) = selectTraysByName(trays, TRAY_4)
 
   def main(args: Array[String]): Unit = {
     println(s"Executing (class): ${this.getClass.getName}\n")
@@ -321,14 +310,14 @@ object AnswerGraph1n2 {
 
   def print_graph_1_and_2_analysis(allTrays: Seq[Tray],
                                    targetTrays: Seq[Tray]): Unit = {
-    print(s"\n2015\n")
+    println(s"\n2015\n")
     print_analysis_year(
       special = targetTrays,
       all = allTrays,
       year = 2015
     )
 
-    print(s"\n2016\n")
+    println(s"\n2016\n")
     print_analysis_year(
       special = targetTrays,
       all = allTrays,
@@ -337,12 +326,12 @@ object AnswerGraph1n2 {
   }
 
   def print_graph4_analysis(allTrays: Seq[Tray]): Unit = {
-    print("\nGRAPH 4\n")
+    println("\nGRAPH 4\n")
 
-    print("4-tray intervention analysis, by month:")
-    print("\n2015")
+    println("4-tray intervention analysis, by month:")
+    println("\n2015")
     print_analysis_graph_4_by_month(allTrays, 2015)
-    print("\n2016")
+    println("\n2016")
     print_analysis_graph_4_by_month(allTrays, 2016)
 
 //    print("4-tray intervention analysis, by discrete date from data:")
@@ -446,7 +435,7 @@ object AnswerGraph1n2 {
     println(s"There are ${wentTrays.size} WENT trays")
 
     val specialTrays = allTrays.filter { tray =>
-      specialTrayNames.contains(tray.name)
+      specialTrayNames.contains(cleanName(tray.name))
     }
     println(
       s"There are ${specialTrays.size} trays from one of the ${specialTrayNames.size} special tray names")
