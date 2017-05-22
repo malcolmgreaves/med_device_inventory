@@ -55,8 +55,11 @@ object AnswerGraph1n2 {
   def leadingTwoZeros(x: String): String =
     ("00" + x).substring(x.length)
 
-  def trayDateKey(t: Tray) = {
-    val (y, m, d) = extractYearMonthDay(t.date)
+  def trayDateKey(t: Tray): Long =
+    trayDateKey(t.date)
+
+  def trayDateKey(date: DateS): Long = {
+    val (y, m, d) = extractYearMonthDay(date)
     new BigInteger(
       y.toString + leadingTwoZeros(m.toString) + leadingTwoZeros(d.toString)
     ).longValueExact()
@@ -372,25 +375,25 @@ object AnswerGraph1n2 {
     println(s"[month] Instruments missing from $TRAY_1 in $year")
 
     write_analysis_total_missing_instruments_monthly(
-      """Month grouping vs. Tray "1"""",
+      s"""$year Month grouping vs. Tray "1"""",
       inGivenYear(selectTrays1(allTrays), year))
     println("")
 
     println(s"[month] Instruments missing from $TRAY_2 in $year")
     write_analysis_total_missing_instruments_monthly(
-      """Month grouping vs. Tray "2"""",
+      s"""$year Month grouping vs. Tray "2"""",
       inGivenYear(selectTrays2(allTrays), year))
     println("")
 
     println(s"[month] Instruments missing from $TRAY_3 in $year")
     write_analysis_total_missing_instruments_monthly(
-      """Month grouping vs. Tray "3"""",
+      s"""$year Month grouping vs. Tray "3"""",
       inGivenYear(selectTrays3(allTrays), year))
     println("")
 
     println(s"[month] Instruments missing from $TRAY_4 in $year")
     write_analysis_total_missing_instruments_monthly(
-      """Month grouping vs. Tray "4"""",
+      s"""$year Month grouping vs. Tray "4"""",
       inGivenYear(selectTrays4(allTrays), year))
     println("")
   }
@@ -401,25 +404,25 @@ object AnswerGraph1n2 {
     println(s"[discrete] Instruments missing from $TRAY_1 in $year")
 
     write_analysis_total_missing_instruments_discrete(
-      """Exact date of each excel file vs. Tray "1"""",
+      s"""$year Exact date of each excel file vs. Tray "1"""",
       inGivenYear(selectTrays1(allTrays), year))
     println("")
 
     println(s"[discrete] Instruments missing from $TRAY_2 in $year")
     write_analysis_total_missing_instruments_discrete(
-      """Exact date of each excel file vs. Tray "2"""",
+      s"""$year Exact date of each excel file vs. Tray "2"""",
       inGivenYear(selectTrays2(allTrays), year))
     println("")
 
     println(s"[discrete] Instruments missing from $TRAY_3 in $year")
     write_analysis_total_missing_instruments_discrete(
-      """Exact date of each excel file vs. Tray "3"""",
+      s"""$year Exact date of each excel file vs. Tray "3"""",
       inGivenYear(selectTrays3(allTrays), year))
     println("")
 
     println(s"[discrete] Instruments missing from $TRAY_4 in $year")
     write_analysis_total_missing_instruments_discrete(
-      """Exact date of each excel file vs. Tray "4"""",
+      s"""$year Exact date of each excel file vs. Tray "4"""",
       inGivenYear(selectTrays4(allTrays), year))
     println("")
   }
@@ -529,16 +532,17 @@ object AnswerGraph1n2 {
     w.write("month,number of missing items")
     w.newLine()
 
-    val dateSortedTrays = targetTrays.sortBy { trayDateKey }
-
-    val byDate = targetTrays.foldLeft(Map.empty[DateS, Seq[Tray]]) {
-      case (a, tray) =>
-        val date = tray.date
-        if (a.contains(date))
-          (a - date) + (date -> (a(date) :+ tray))
-        else
-          a + (date -> List(tray))
-    }
+    val byDate : Seq[(DateS, Seq[Tray])] = targetTrays
+      .foldLeft(Map.empty[DateS, Seq[Tray]]) {
+        case (a, tray) =>
+          val date = tray.date
+          if (a.contains(date))
+            (a - date) + (date -> (a(date) :+ tray))
+          else
+            a + (date -> List(tray))
+      }
+      .toSeq
+      .sortBy { case (date, _) => trayDateKey(date) }
 
     byDate.foreach {
       case (date, trays) =>
