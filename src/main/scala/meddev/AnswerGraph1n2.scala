@@ -111,19 +111,48 @@ object AnswerGraph1n2 {
         a + (y -> groupByWeek(traysInYear))
     }
 
-  def trayHistory(all_trays: Seq[Tray]): Map[String, Seq[Tray]] =
+  case class UniqueTray(name: String, serialNum: String)
+
+  def trayToUnique(t: Tray): UniqueTray =
+    UniqueTray(name = cleanName(t.name), serialNum = cleanName(t.serialNum))
+
+  def trayHistory(all_trays: Seq[Tray]): Map[UniqueTray, Seq[Tray]] =
     all_trays
-      .foldLeft(Map.empty[String, Seq[Tray]]) {
+      .foldLeft(Map.empty[UniqueTray, Seq[Tray]]) {
         case (a, tray) =>
-          val name = cleanName(tray.name)
-          if (a.contains(name)) {
-            (a - name) + (name -> (a(name) :+ tray))
-          } else {
-            a + (name -> List(tray))
-          }
+          val uniqueTray = trayToUnique(tray)
+          if (a.contains(uniqueTray ))
+            (a - uniqueTray ) + (uniqueTray  -> (a(uniqueTray ) :+ tray))
+          else
+            a + (uniqueTray -> List(tray))
       }
 //      .map { case (name, trays) => (name, trays.sortWith { trayDateLt }) }
       .map { case (name, trays) => (name, trays.sortBy { trayDateKey }) }
+
+  def trayTypeToHistory(allTrays: Seq[Tray]): Map[String, Seq[Tray]] =
+    allTrays
+      .foldLeft(Map.empty[String, Seq[Tray]]) {
+        case (a, tray) =>
+          val name = cleanName(tray.name)
+          if (a.contains(name))
+            (a - name ) + (name  -> (a(name ) :+ tray))
+          else
+            a + (name -> List(tray))
+      }
+      .map { case (name, trays) => (name, trays.sortBy { trayDateKey }) }
+      .foldLeft(Map.empty[String, Seq[Tray]]) {
+        case (a, (tray, history)) =>
+          val compactName = trayNameToKeyFragment(tray)
+          if (a.contains(compactName)) {
+            (a - compactName) + (compactName -> (a(compactName) ++ history))
+          } else {
+            a + (compactName -> history)
+          }
+      }
+      .map {
+        case (compactName, history) =>
+          (compactName, history.sortBy { trayDateKey }.toIndexedSeq)
+      }
 
   def traysOf(tray2history: Map[_, Seq[Tray]]): Seq[Tray] =
     tray2history.flatMap { case (_, trays) => trays }.toSeq.sortBy {
@@ -237,39 +266,35 @@ object AnswerGraph1n2 {
     val tray2history = trayHistory(allTrays)
     println(s"${tray2history.size} unique trays")
 
-    val trayType2history = tray2history
-      .foldLeft(tray2history.empty) {
-        case (a, (tray, history)) =>
-          val compactName = trayNameToKeyFragment(tray)
-          if (a.contains(compactName)) {
-            (a - compactName) + (compactName -> (a(compactName) ++ history))
-          } else {
-            a + (compactName -> history)
-          }
-      }
-      .map {
-        case (compactName, history) =>
-          (compactName, history.sortBy { trayDateKey }.toIndexedSeq)
-      }
+    tray2history.keys.slice(0, 5).foreach{println}
+
+    val trayType2history = trayTypeToHistory(allTrays)
     println(s"${trayType2history.size} tray types\n")
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     val targetTrays = get_special_went_trays(trayType2history, allTrays)
 
+    print(s"\n2015\n")
     print_analysis_year(
       special = targetTrays,
       all = allTrays,
       year = 2015
     )
 
+    print(s"\n2016\n")
     print_analysis_year(
       special = targetTrays,
       all = allTrays,
       year = 2016
     )
 
-
+    println("")
     print_all_days_record(allTrays)
   }
+
 
   def print_all_days_record(allTrays: Seq[Tray]): Unit = {
     println("Number of days of recorded data, per month, per year\n")
@@ -302,11 +327,22 @@ object AnswerGraph1n2 {
   def print_analysis_year(special: Seq[Tray],
                           all: Seq[Tray],
                           year: Year): Unit = {
+
+    println(s"\n$year REPORTED TRAYS (totals)\n")
+
     println(s"Number of special & WENT* trays missing in $year")
     analysis_raw_tray_counts(inGivenYear(special, year))
 
     println(s"Number of ALL trays missing in $year")
     analysis_raw_tray_counts(inGivenYear(all, year))
+
+    println(s"\n$year MISSING INSTRUMENTS\n")
+
+    println(s"Number of instruments missing from special & WENT trays in $year")
+    analysis_total_missing_instruments_monthly(inGivenYear(special, year))
+
+    println(s"Number of instruments missing from all trays in $year")
+    analysis_total_missing_instruments_monthly(inGivenYear(all, year))
   }
 
   def inGivenYear(ts: Seq[Tray], year: Year): Seq[Tray] =
@@ -336,6 +372,16 @@ object AnswerGraph1n2 {
       targetTrays,
       "number of trays",
       (trays: Seq[Tray]) => trays.size.toString
+    )
+
+  def analysis_total_missing_instruments_monthly(targetTrays: Seq[Tray]): Unit =
+    print_by_month_X(
+      targetTrays,
+      "number of missing items",
+      (trays: Seq[Tray]) => {
+        val (missing, totalExpected, _) = compMissing(trays)
+        missing.toString
+      }
     )
 
 
