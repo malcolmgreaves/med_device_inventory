@@ -1,0 +1,40 @@
+Executing (class): meddev.AnswerGraph1n2$
+
+[Mon May 22 00:03:42 PDT 2017] | Parsed inventory for 2016-Aug-2, has 47648 trays.
+1622 unique trays
+	example of 5 unique tray names...
+EPLA003-011
+EORT054-001
+EORT578-001
+EORT929-001
+EORT886-002
+
+38 tray types
+
+
+
+--------------------------------------------------
+--------------------------------------------------
+COUNTS FOR NORMALIZING AGAINST (aka denominators)
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+Number of days of recorded data, per month, per year
+
+2015
+Jan,2
+Feb,3
+Mar,5
+Apr,2
+May,4
+Jun,5
+Jul,4
+Aug,4
+Sep,3
+Oct,4
+Nov,3
+Dec,5
+
+2016
