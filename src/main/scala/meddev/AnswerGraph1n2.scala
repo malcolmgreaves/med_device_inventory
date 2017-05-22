@@ -172,10 +172,10 @@ object AnswerGraph1n2 {
         println("")
     }
 
-  def organize[T](m: Map[String, T]): Seq[(String, T)] =
+  def organize[K: Ordering, T](m: Map[K, T]): Seq[(K, T)] =
     m.toSeq.sortBy { case (key, _) => key }
 
-  val specialTrayNames = Seq(
+  val specialTrayNames = Set(
     "WORA002",
     "WORA011",
     "WORA032",
@@ -253,20 +253,103 @@ object AnswerGraph1n2 {
       }
     println(s"${trayType2history.size} tray types\n")
 
-    val wentTrays = trayType2history("WENT")
-    println(s"There are ${wentTrays.size} WENT trays\n")
+    val targetTrays = get_special_went_trays(trayType2history, allTrays)
 
-    println("#s by month")
-    val wentByMonth = organize(groupByMonth(wentTrays).map {
-      case (m, x) =>
-        (DataSchemaHelpers.monthNumToName(m), x)
-    })
-    wentByMonth.foreach {
-      case (month, trays) =>
-        println(s"$month has ${trays.size} trays")
+    print_analysis_year(
+      special = targetTrays,
+      all = allTrays,
+      year = 2015
+    )
+
+    print_analysis_year(
+      special = targetTrays,
+      all = allTrays,
+      year = 2016
+    )
+
+
+    print_all_days_record(allTrays)
+  }
+
+  def print_all_days_record(allTrays: Seq[Tray]): Unit = {
+    println("Number of days of recorded data, per month, per year\n")
+    println("2015")
+    print_days_record_per_month(inGivenYear(allTrays, 2015))
+    println("2016")
+    print_days_record_per_month(inGivenYear(allTrays, 2016))
+  }
+
+  def print_days_record_per_month(trays:Seq[Tray]): Unit = {
+    val x = organize(days_recorded_per_month(trays))
+    x.foreach { case (month, n) =>
+      val m = DataSchemaHelpers.monthNumToName(month)
+      println(s"$m,$n")
     }
     println("")
+  }
 
+  def days_recorded_per_month(trays: Seq[Tray]): Map[Month, Int] =
+    groupByMonth(trays).map {
+      case (month, mTrays) =>
+        val x = mTrays.foldLeft(Set.empty[Day]) {
+          case (a, tray) =>
+            val (_, _, day) = extractYearMonthDay(tray.date)
+            a + day
+        }.size
+        (month, x)
+    }
+
+  def print_analysis_year(special: Seq[Tray],
+                          all: Seq[Tray],
+                          year: Year): Unit = {
+    println(s"Number of special & WENT* trays missing in $year")
+    analysis_raw_tray_counts(inGivenYear(special, year))
+
+    println(s"Number of ALL trays missing in $year")
+    analysis_raw_tray_counts(inGivenYear(all, year))
+  }
+
+  def inGivenYear(ts: Seq[Tray], year: Year): Seq[Tray] =
+    ts.filter { tray =>
+      val (y, _, _) = extractYearMonthDay(tray.date)
+      y == year
+    }
+
+  def get_special_went_trays(trayType2history: Map[String, Seq[Tray]],
+                             allTrays: Seq[Tray]): Seq[Tray] = {
+
+    val wentTrays = trayType2history("WENT")
+    println(s"There are ${wentTrays.size} WENT trays")
+
+    val specialTrays = allTrays.filter { tray =>
+      specialTrayNames.contains(tray.name)
+    }
+    println(
+      s"There are ${specialTrays.size} trays from one of the ${specialTrayNames.size} special tray names")
+
+    println("")
+    wentTrays ++ specialTrays
+  }
+
+  def analysis_raw_tray_counts(targetTrays: Seq[Tray]): Unit =
+    print_by_month_X(
+      targetTrays,
+      "number of trays",
+      (trays: Seq[Tray]) => trays.size.toString
+    )
+
+
+  def print_by_month_X(trays: Seq[Tray],
+                       name:String,
+                       dataSelect: Seq[Tray] => String): Unit = {
+    println(s"month,$name")
+    val traysByMonth = organize(groupByMonth(trays))
+    traysByMonth.foreach {
+      case (month, _trays) =>
+        val monthStr = DataSchemaHelpers.monthNumToName(month)
+        println(s"$monthStr,${dataSelect(_trays)}")
+    }
+    println("")
   }
 
 }
