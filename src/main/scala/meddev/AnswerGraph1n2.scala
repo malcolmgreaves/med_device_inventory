@@ -229,7 +229,11 @@ object AnswerGraph1n2 {
     println(s"${trayType2history.size} tray types\n")
 
     val wentTrays = trayType2history("WENT")
-    println(s"There are ${wentTrays.size} WENT trays")
+    println(s"There are ${wentTrays.size} WENT trays\n")
+
+    wentTrays.slice(0, 10).foreach { x =>
+      println(s"${x.name} as ${x.serialNum}\n")
+    }
 
 
 
