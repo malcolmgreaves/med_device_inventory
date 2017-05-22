@@ -111,23 +111,30 @@ object AnswerGraph1n2 {
         a + (y -> groupByWeek(traysInYear))
     }
 
-  case class UniqueTray(name: String, serialNum: String)
+  case class UniqueTray(name: String, serialNum: String) {
+    override def toString = s"$name-$serialNum"
+  }
 
   def trayToUnique(t: Tray): UniqueTray =
     UniqueTray(name = cleanName(t.name), serialNum = cleanName(t.serialNum))
 
-  def trayHistory(all_trays: Seq[Tray]): Map[UniqueTray, Seq[Tray]] =
-    all_trays
+  def trayHistory(allTrays: Seq[Tray]): Map[UniqueTray, Seq[Tray]] =
+    allTrays
       .foldLeft(Map.empty[UniqueTray, Seq[Tray]]) {
         case (a, tray) =>
           val uniqueTray = trayToUnique(tray)
-          if (a.contains(uniqueTray ))
-            (a - uniqueTray ) + (uniqueTray  -> (a(uniqueTray ) :+ tray))
+          if (a.contains(uniqueTray))
+            (a - uniqueTray) + (uniqueTray -> (a(uniqueTray) :+ tray))
           else
             a + (uniqueTray -> List(tray))
       }
-//      .map { case (name, trays) => (name, trays.sortWith { trayDateLt }) }
       .map { case (name, trays) => (name, trays.sortBy { trayDateKey }) }
+
+  def analysis_missing_by_unique_tray_total(trays: Seq[Tray]): Unit = {
+    trayHistory(trays).foreach {
+      case (unique, _trays) =>
+    }
+  }
 
   def trayTypeToHistory(allTrays: Seq[Tray]): Map[String, Seq[Tray]] =
     allTrays
@@ -135,7 +142,7 @@ object AnswerGraph1n2 {
         case (a, tray) =>
           val name = cleanName(tray.name)
           if (a.contains(name))
-            (a - name ) + (name  -> (a(name ) :+ tray))
+            (a - name) + (name -> (a(name) :+ tray))
           else
             a + (name -> List(tray))
       }
@@ -216,6 +223,31 @@ object AnswerGraph1n2 {
     "BGEN018"
   )
 
+  val TRAY_1 = "WENT160"
+  val TRAY_2 = "WENT024"
+  val TRAY_3 = "WENT084"
+  val TRAY_4 = "WENT155"
+
+  def selectTrays1(trays: Seq[Tray]): Seq[Tray] =
+    trays.filter { tray =>
+      tray.name.equals(TRAY_1)
+    }
+
+  def selectTrays2(trays: Seq[Tray]): Seq[Tray] =
+    trays.filter { tray =>
+      tray.name.equals(TRAY_2)
+    }
+
+  def selectTrays3(trays: Seq[Tray]): Seq[Tray] =
+    trays.filter { tray =>
+      tray.name.equals(TRAY_3)
+    }
+
+  def selectTrays4(trays: Seq[Tray]): Seq[Tray] =
+    trays.filter { tray =>
+      tray.name.equals(TRAY_4)
+    }
+
   def main(args: Array[String]): Unit = {
     println(s"Executing (class): ${this.getClass.getName}\n")
 
@@ -266,7 +298,7 @@ object AnswerGraph1n2 {
     val tray2history = trayHistory(allTrays)
     println(s"${tray2history.size} unique trays")
 
-    tray2history.keys.slice(0, 5).foreach{println}
+    tray2history.keys.slice(0, 5).foreach { println }
 
     val trayType2history = trayTypeToHistory(allTrays)
     println(s"${trayType2history.size} tray types\n")
@@ -277,6 +309,18 @@ object AnswerGraph1n2 {
 
     val targetTrays = get_special_went_trays(trayType2history, allTrays)
 
+    print("")
+    print_graph_1_and_2_analysis(allTrays, targetTrays)
+
+    println("")
+    print_all_days_record(allTrays)
+
+    print("")
+    print_graph4_analysis(allTrays)
+  }
+
+  def print_graph_1_and_2_analysis(allTrays: Seq[Tray],
+                                   targetTrays: Seq[Tray]): Unit = {
     print(s"\n2015\n")
     print_analysis_year(
       special = targetTrays,
@@ -290,11 +334,51 @@ object AnswerGraph1n2 {
       all = allTrays,
       year = 2016
     )
-
-    println("")
-    print_all_days_record(allTrays)
   }
 
+  def print_graph4_analysis(allTrays: Seq[Tray]): Unit = {
+    print("\nGRAPH 4\n")
+
+    print("4-tray intervention analysis, by month:")
+    print("\n2015")
+    print_analysis_graph_4_by_month(allTrays, 2015)
+    print("\n2016")
+    print_analysis_graph_4_by_month(allTrays, 2016)
+
+//    print("4-tray intervention analysis, by discrete date from data:")
+//    print("\n2015")
+//    print_analysis_graph_4_discrete_date(allTrays, 2015)
+//    print("\n2016")
+//    print_analysis_graph_4_discrete_date(allTrays, 2016)
+  }
+
+  def print_analysis_graph_4_by_month(allTrays: Seq[Tray], year: Year): Unit = {
+
+    println(s"Instruments missing from $TRAY_1 in $year")
+    analysis_total_missing_instruments_monthly(
+      inGivenYear(selectTrays1(allTrays), year))
+    println("")
+
+    println(s"Instruments missing from $TRAY_2 in $year")
+    analysis_total_missing_instruments_monthly(
+      inGivenYear(selectTrays2(allTrays), year))
+    println("")
+
+    println(s"Instruments missing from $TRAY_3 in $year")
+    analysis_total_missing_instruments_monthly(
+      inGivenYear(selectTrays3(allTrays), year))
+    println("")
+
+    println(s"Instruments missing from $TRAY_4 in $year")
+    analysis_total_missing_instruments_monthly(
+      inGivenYear(selectTrays4(allTrays), year))
+    println("")
+  }
+
+  def print_analysis_graph_4_discrete_date(allTrays: Seq[Tray],
+                                           year: Year): Unit = {
+    ???
+  }
 
   def print_all_days_record(allTrays: Seq[Tray]): Unit = {
     println("Number of days of recorded data, per month, per year\n")
@@ -304,11 +388,12 @@ object AnswerGraph1n2 {
     print_days_record_per_month(inGivenYear(allTrays, 2016))
   }
 
-  def print_days_record_per_month(trays:Seq[Tray]): Unit = {
+  def print_days_record_per_month(trays: Seq[Tray]): Unit = {
     val x = organize(days_recorded_per_month(trays))
-    x.foreach { case (month, n) =>
-      val m = DataSchemaHelpers.monthNumToName(month)
-      println(s"$m,$n")
+    x.foreach {
+      case (month, n) =>
+        val m = DataSchemaHelpers.monthNumToName(month)
+        println(s"$m,$n")
     }
     println("")
   }
@@ -316,11 +401,13 @@ object AnswerGraph1n2 {
   def days_recorded_per_month(trays: Seq[Tray]): Map[Month, Int] =
     groupByMonth(trays).map {
       case (month, mTrays) =>
-        val x = mTrays.foldLeft(Set.empty[Day]) {
-          case (a, tray) =>
-            val (_, _, day) = extractYearMonthDay(tray.date)
-            a + day
-        }.size
+        val x = mTrays
+          .foldLeft(Set.empty[Day]) {
+            case (a, tray) =>
+              val (_, _, day) = extractYearMonthDay(tray.date)
+              a + day
+          }
+          .size
         (month, x)
     }
 
@@ -338,7 +425,8 @@ object AnswerGraph1n2 {
 
     println(s"\n$year MISSING INSTRUMENTS\n")
 
-    println(s"Number of instruments missing from special & WENT trays in $year")
+    println(
+      s"Number of instruments missing from special & WENT trays in $year")
     analysis_total_missing_instruments_monthly(inGivenYear(special, year))
 
     println(s"Number of instruments missing from all trays in $year")
@@ -374,7 +462,8 @@ object AnswerGraph1n2 {
       (trays: Seq[Tray]) => trays.size.toString
     )
 
-  def analysis_total_missing_instruments_monthly(targetTrays: Seq[Tray]): Unit =
+  def analysis_total_missing_instruments_monthly(
+      targetTrays: Seq[Tray]): Unit =
     print_by_month_X(
       targetTrays,
       "number of missing items",
@@ -384,9 +473,8 @@ object AnswerGraph1n2 {
       }
     )
 
-
   def print_by_month_X(trays: Seq[Tray],
-                       name:String,
+                       name: String,
                        dataSelect: Seq[Tray] => String): Unit = {
     println(s"month,$name")
     val traysByMonth = organize(groupByMonth(trays))
