@@ -182,7 +182,7 @@ object BigPicQuestions {
         else
           IndexedSeq.empty[File]
 
-      args.slice(0, args.length - 1).flatMap { x =>
+      args.slice(0, math.max(args.length - 1, 1)).flatMap { x =>
         System.err.println(s"Reading file: $x")
         deeper(new File(x))
       }
@@ -228,7 +228,9 @@ object BigPicQuestions {
     println(s"${trayType2history.size} tray types\n")
 
     println("tray types:")
-    trayType2history.keys.foreach { key => println(key)}
+    trayType2history.keys.foreach { key =>
+      println(key)
+    }
 
   }
 
