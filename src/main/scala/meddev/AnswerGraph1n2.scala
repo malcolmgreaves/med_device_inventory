@@ -354,52 +354,41 @@ object AnswerGraph1n2 {
   def print_graph4_analysis(allTrays: Seq[Tray]): Unit = {
     println("\nGRAPH 4\n")
 
-    """
-      |(1)
-      |(2)
-      |(3)
-      |(4)
-      |(5) Exact date of each excel file vs. Tray "1"
-      |(6) Exact date of each excel file vs. Tray "2"
-      |(7) Exact date of each excel file vs. Tray "3"
-      |(8) Exact date of each excel file vs. Tray "4"
-    """.stripMargin
-
     println("4-tray intervention analysis, by month:")
     println("\n===== 2015 =====\n")
     print_analysis_graph_4_by_month(allTrays, 2015)
     println("\n===== 2016 =====\n")
     print_analysis_graph_4_by_month(allTrays, 2016)
 
-//    print("4-tray intervention analysis, by discrete date from data:")
-//    print("\n2015")
-//    print_analysis_graph_4_discrete_date(allTrays, 2015)
-//    print("\n2016")
-//    print_analysis_graph_4_discrete_date(allTrays, 2016)
+    print("4-tray intervention analysis, by discrete date from data:")
+    println("\n===== 2015 =====\n")
+    print_analysis_graph_4_discrete_date(allTrays, 2015)
+    println("\n===== 2016 =====\n")
+    print_analysis_graph_4_discrete_date(allTrays, 2016)
   }
 
   def print_analysis_graph_4_by_month(allTrays: Seq[Tray], year: Year): Unit = {
 
-    println(s"Instruments missing from $TRAY_1 in $year")
+    println(s"[month] Instruments missing from $TRAY_1 in $year")
 
     write_analysis_total_missing_instruments_monthly(
       """Month grouping vs. Tray "1"""",
       inGivenYear(selectTrays1(allTrays), year))
     println("")
 
-    println(s"Instruments missing from $TRAY_2 in $year")
+    println(s"[month] Instruments missing from $TRAY_2 in $year")
     write_analysis_total_missing_instruments_monthly(
       """Month grouping vs. Tray "2"""",
       inGivenYear(selectTrays2(allTrays), year))
     println("")
 
-    println(s"Instruments missing from $TRAY_3 in $year")
+    println(s"[month] Instruments missing from $TRAY_3 in $year")
     write_analysis_total_missing_instruments_monthly(
       """Month grouping vs. Tray "3"""",
       inGivenYear(selectTrays3(allTrays), year))
     println("")
 
-    println(s"Instruments missing from $TRAY_4 in $year")
+    println(s"[month] Instruments missing from $TRAY_4 in $year")
     write_analysis_total_missing_instruments_monthly(
       """Month grouping vs. Tray "4"""",
       inGivenYear(selectTrays4(allTrays), year))
@@ -408,7 +397,31 @@ object AnswerGraph1n2 {
 
   def print_analysis_graph_4_discrete_date(allTrays: Seq[Tray],
                                            year: Year): Unit = {
-    ???
+
+    println(s"[discrete] Instruments missing from $TRAY_1 in $year")
+
+    write_analysis_total_missing_instruments_discrete(
+      """Exact date of each excel file vs. Tray "1"""",
+      inGivenYear(selectTrays1(allTrays), year))
+    println("")
+
+    println(s"[discrete] Instruments missing from $TRAY_2 in $year")
+    write_analysis_total_missing_instruments_discrete(
+      """Exact date of each excel file vs. Tray "2"""",
+      inGivenYear(selectTrays2(allTrays), year))
+    println("")
+
+    println(s"[discrete] Instruments missing from $TRAY_3 in $year")
+    write_analysis_total_missing_instruments_discrete(
+      """Exact date of each excel file vs. Tray "3"""",
+      inGivenYear(selectTrays3(allTrays), year))
+    println("")
+
+    println(s"[discrete] Instruments missing from $TRAY_4 in $year")
+    write_analysis_total_missing_instruments_discrete(
+      """Exact date of each excel file vs. Tray "4"""",
+      inGivenYear(selectTrays4(allTrays), year))
+    println("")
   }
 
   def print_all_days_record(allTrays: Seq[Tray]): Unit = {
@@ -506,6 +519,35 @@ object AnswerGraph1n2 {
         missing.toString
       }
     )
+
+  def write_analysis_total_missing_instruments_discrete(
+      fileOutName: String,
+      targetTrays: Seq[Tray]
+  ): Unit = {
+
+    val w = new BufferedWriter(new FileWriter(fileOutName))
+    w.write("month,number of missing items")
+    w.newLine()
+
+    val dateSortedTrays = targetTrays.sortBy { trayDateKey }
+
+    val byDate = targetTrays.foldLeft(Map.empty[DateS, Seq[Tray]]) {
+      case (a, tray) =>
+        val date = tray.date
+        if (a.contains(date))
+          (a - date) + (date -> (a(date) :+ tray))
+        else
+          a + (date -> List(tray))
+    }
+
+    byDate.foreach {
+      case (date, trays) =>
+        val (missing, totalExpected, _) = compMissing(trays)
+        w.write(s"$date,$missing")
+        w.newLine()
+    }
+    w.close()
+  }
 
   def analysis_total_missing_instruments_monthly(
       targetTrays: Seq[Tray]): Unit =
